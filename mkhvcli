@@ -1,0 +1,1 @@
+g++ -o hvcli  -lm -lpthread  -lnsl  -ldl -lieee -lm -ldl hvclient.c

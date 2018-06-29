@@ -1,0 +1,7 @@
+#
+The ethernet card that we have used for HVmainframe is:
+D-Link DE-220PCT - 10 Mbps Combo 16 bit Ethernet ISA Adapter.
+The setting for card, that was installed 
+to the HV mainframe type of LeCroy-1458 is:
+IRQ number: 12 
+Base I/O Address: 300 (hex)

@@ -1,0 +1,209 @@
+#!/bin/bash
+# Description:
+#       Activation Script for RCS High Voltage Control.
+#       This script prevents simultaneous access to the High Voltage Control program.
+# hvs - start High Voltage System application
+#       map.file - name of key pointing to map file and location(path/filename)
+#       data.dir - name of key pointing to directory with save/load voltage settings
+#  May 4, 2001
+#  Jan 3, 2002 
+#  Jan 9, 2002 add user as 'whoami' for path resolving
+#  Jan 12,2002 add parameters for database
+#  May 27,2005 move to new directory from 'hv' to 'hvg'  
+#  Jan 26,2006 Many changes: 
+#     a call parameter indicates a directory with configuration files (several tasks can run one CPU)
+#     Java now runs in a separate shell (otherwise System.exit kills the script shell and the lock 
+#        files are  not removed)
+#  Oct 2017 Moved slow controls from adaq to adaqsc
+#
+  PROG=`basename $0`
+  HOST=`hostname`
+  USR=`whoami`
+#  echo Start $PROG
+
+# ==========   Help routine start
+ help_dis () {
+  cat <<help_doc
+ $PROG - a script to start the HV control task (HVS appication, written in Java)
+         A call parameter is needed: DIR - the name of the directory containing the configuration
+           files, the settings and the log files
+          This directory may exist in ~/slowc/, for example ~/slowc/HV_BB,
+          or anywhere else with the full path provided 
+ Example: $PROG HV_BB
+help_doc
+ }
+# ==========   Help routine end
+
+#Making sure there is an argument provided!
+  if [ "$1" = "?" -o "$1" = "-?" -o "$1" = "-h" ]; then
+    help_dis
+    exit
+  fi
+
+  if [ $# -lt 1 ]; then
+    echo Error - 1 parameter needed
+    help_dis
+    exit
+  fi
+
+
+  dirhome=~/slowc
+  if [ ! -d $dirhome ]; then
+    echo " *** Error - missing directory " $dirhome " which should contain the Java code in hvg subdirectory"
+    exit
+  fi
+  cd $dirhome
+
+
+  dirj=hvg.newAug2014
+  dirp=$dirhome/$dirj
+  if [ ! -d $dirp ]; then
+    echo " *** Error - missing directory " $dirp " which should contain the Java code"
+    exit
+  fi
+
+  prog=HVS
+  classname=$dirp/$prog.class
+  if [ ! -s $dirp ]; then
+    echo " *** Error - missing Java class " $dirp/$prog.class 
+    exit
+  fi
+
+  dird=$1
+
+  if [ ! -d $dird ]; then
+    echo " *** Error - missing directory " $dird
+    help_dis
+    exit
+  fi
+
+  cd $dird
+  dirtask=`pwd`
+  tmpf=$dirtask/.tmpf
+
+# - Check/create the subdirectories needed
+  
+  dirdb=hv_set
+  dirdbf=$dirtask/$dirdb
+  if [ ! -d  $dirdb ]; then
+    echo " --- Warning - missing directory " $dirdb is created
+    mkdir $dirdb
+  fi
+  dirlog=hv_log
+  dirlogf=$dirtask/$dirlog
+  if [ ! -d  $dirlog ]; then
+    echo " --- Warning - missing directory " $dirlog is created
+    mkdir $dirlog
+  fi
+  dirmapf=$dirtask/hv_maps
+
+  dirdbase=`basename $dird`
+
+#  lockfile=/tmp/$HOST_hvs_$dirdbase
+  lockfile=$dirtask/.lock_hvs_$dirdbase
+
+# add trap
+  trap 'echo "Get interrupt signal \n";  rm -f $lockfile; exit -1'  2 3 15
+
+# path to java
+  jv=/usr/bin/java
+  #jv=/u/apps/java/jdk1.6.0_03/bin/java
+# class path with database driver
+  cp=$dirp
+
+#** define database parameters
+# db url: what type of database and ://host/dbname
+#dburl="jdbc:postgresql://adaqlr3/rcs_lg"
+
+# or only :db_name if db running on the same host
+  dburl="jdbc:postgresql:rcs_lg"
+
+# db driver name from driver Doc
+  dbdriver="org.postgresql.Driver"
+# db table name
+  dbtable="rcs_hv_status"
+# db user name
+  dbuser="postgres"
+# db password
+  dbpswd="halla"
+        
+  if test -e $lockfile; then
+    hst=`cat $lockfile | awk '{print $1}'`
+    usr=`cat $lockfile | awk '{print $2}'`
+    pid=`cat $lockfile | awk '{print $3}'`
+    echo A lock file exists " " HOST= $hst "    USER= " $usr "    PID= " $pid
+    if [ "$usr" != "$USR" ]; then
+       echo " *** Sorry, High Voltage Control might be already in use by another user " $usr " on " $hst "with pid" $pid
+       echo " ***  You have to stop that task manually and remove the lock file " $lockfile
+       exit 1 
+    fi #Wrong user
+# Checking if the gui is running on another machine.
+    
+
+
+
+#     Check whether the task is still running and try to remove it
+
+    try=0; 
+    while let $((try++)); [ $try -lt 3 ]; do 
+      if [ "$hst" == "$HOST" ]; then
+        exists=`ps -ef | awk '{print $2}' | grep $pid`
+        own=1
+      else
+# Removed hard code adev, replaced with $usr.
+        ssh $usr@$hst ps -ef > $tmpf
+        if [ $? -ne 0 ]; then
+           echo " *** Error - can not connect to the host where HVS migh be running " $hst
+           rm -f tmpf
+           exit
+        fi # Cannot ssh!
+        exists=`cat $tmpf | awk '{print $2}' | grep $pid`
+        rm -f tmpf
+        own=0
+      fi #if-else
+      if  [ "$exists" != "" ]; then 
+        echo    ""
+        echo -n "Sorry, High Voltage Control already in use by " $usr " on " $hst "with pid" $pid
+        echo    ""
+        echo -n "Kill running process($pid) and start a new one? (y/n) "
+        read answ
+        case $answ in
+	     y*) echo -n "Killing..."
+                 if [ $own -eq 1 ]; then                      
+                    echo  Kill $pid
+                    kill $pid 
+                 else
+# Removed hard code adev, replaced with $usr.
+                    ssh $usr@$hst kill $pid 
+                    if [ $? -ne 0 ]; then
+                       echo " *** Error - can not connect to the host to kill HVS " $hst
+                       exit
+                    fi
+	         fi #if-else for yes
+                 sleep 2  # wait till the PID disappears
+                 echo " Done." ;;
+	     n*) echo " OK, exiting... " ; exit ;;
+        esac
+      else
+        echo Clean the lockfile $lockfile
+        [ -e $lockfile ] && rm -f $lockfile
+      fi # if-else $exists
+    done
+  fi # if there is a lockfile.
+
+  if ! test -e $lockfile; then
+    cd $dirp
+    pwd 
+    $jv -version
+    echo "Starting application..."
+#      An extra shell allows to use "exec" with some shell commands after the Java task; the PID $$ should be not expanded at this moment!! 
+    bash -c " \
+    echo $HOST $USR \$\$ > $lockfile;\
+    exec $jv -cp $cp -Dprog.dir=$dirp -Dtask.dir=$dirtask -Ddata.dir=$dirdbf -Dlog.dir=$dirlogf -Dmap.dir=$dirmapf  $prog $dburl $dbdriver $dbuser $dbpswd $dbtable ;"
+
+    echo Remove the lockfile $lockfile
+    rm -f $lockfile
+  fi
+
+exit 0
+

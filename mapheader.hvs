@@ -1,0 +1,22 @@
+# map file for RCS calorimeter
+# Last update: 17 Apr 2001
+
+# host names of HVmainframes
+# hostname1 hostname2 ...
+
+# x,y calorimeter channels placement
+#   X:
+#    22  ... ... ... ... ... ...   01
+
+# Y:
+# 34
+# 33
+# ...
+#  2
+#  1
+# 
+#   #H#SS#CC - number of HVmainframe channel,
+#              #H - number of mainframe by it location in hostname string above (1 -is first one)
+#	       #SS - two digit slot number(0-15)
+#              #CC - two digit channel number(0-12)          
+# 

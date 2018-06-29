@@ -1,0 +1,291 @@
+#!/bin/bash
+#
+#-- Get the HV parameters from the "hvs" server
+#
+#-- Update Oct. 31 2017: HV was moved to the adaqsc machine with account aslow -J. Bane
+
+  ulimit -f 50000000
+  ulimit -c 0
+
+  PROG=`basename $0`
+#  echo Start $PROG
+
+  serverlockfile=/adaqfs/home/aslow/slowc/LEFT/.lock_hvs_LEFT
+
+  hostserv=`cat $serverlockfile | awk '{print $1}'`
+  hostsna=`cat $serverlockfile | awk '{print $2}'`
+  hostsbb=`cat $serverlockfile | awk '{print $1}'`
+#  hostserv=XX
+#  hostsna=adev
+#  hostsbb=adaql3
+  port=5588
+  detec=RHRS_SC
+  hvpar=DV
+  chmap=XX
+  tst=0
+  hlp=0
+  comm=GET
+  setval=XX
+  fnam=XX
+  
+#  HVC=/adaqfs/home/adev/slowc/hvg/hvcli
+  HVC=/adaqfs/home/aslow/slowc/hvg.newAug2014/hvcli
+
+  pid=$PPID
+  declare -a ftmp
+  i=0 ; while let $((i++)); [ $i -lt 6 ]; do 
+    ftmp[$i]=hv.$i.$pid.tmp
+  done
+
+# ==========   Help routine start
+ help_dis () {
+  cat <<help_doc
+ $PROG - a script to get HV parameters from the "hvs" server
+ Call parameters:
+ $PROG -D detec [-c command] -m range [-c command] [-P parameter-to-get] [-H host] [-p port] ....
+    where:
+           -c command (GET or SET or MAPS)                      default: $comm
+              MAPS: just prints the maps names 
+             (-D should be defined, the other parameters are ignored)
+           -P parameter to use : DV, MV, MC, CE                 default: $hvpar
+              for -c SET the valid parameters are DV, CE
+           -D detector maps (NA_ND, NA_VT, BB_SH, BB_PS, BB_SC) default: none
+              NA: NA_ND_L / NA_ND_R / NA_VT_L / NA_VT_R
+              BB: BB_PS / BB_PS_L /BB_PS_R / BB_SC / S0 / PRL1
+           -m colums,rows range, ex: 3,17 or 2:13,7:9           default: none                  
+           -v  value to SET (used if no -f declared)            default: none
+           -f  file name containing lines with "ix iy value"    default: none
+           -t  test only                                        default: none
+           -H host name where the server is running             default: none
+              (if none - $hostsna for NA and $hostsbb for BB)
+           -p port number                                       default: $port
+           -b client program                                    default: $HVC
+           -? or ? or -h  print this help                       default: none
+ Example: $PROG -c GET -P MV -D NA_ND_L -m 1:4,2:26  
+ Example: $PROG -c GET -P MC -D BB_SH -m 1:7,1:27  
+ Example: $PROG -c MAPS -P MC -D NA_VT_L -m 1:7,1:27  
+ Example: $PROG -c SET -P DV -v -1200 -D NA_ND_L -m 1:7,1:27  
+ Example: $PROG -c SET -P CE -v 1 -D NA_ND_L -m 1:7,1:27  
+help_doc
+ }
+# ==========   Help routine end
+# ==========   Exit routine
+ exit_proc () {
+  i=0 ; while let $((i++)); [ $i -lt 6 ]; do 
+    fn=${ftmp[$i]}
+    [ -f "$fn" ] && rm -f $fn 
+  done
+ }
+# ==========   Help routine end
+
+  if [ "$1" = "?" -o "$1" = "-?" ]; then
+    help_dis
+    exit 2
+  fi
+
+  set -- `getopt htP:D:c:v:m:f:H:p: $*`
+  if [ $? != 0 ] ; then
+    echo *** Error in getopt . Usage:
+    help_dis
+    exit 2
+  fi
+  for i in $* ; do
+     case $i in
+      -t)  tst=1 ; shift 1;;
+      -h)  hlp=1 ; shift 1;;
+      -c)  comm=$2 ; shift 2;;
+      -P)  hvpar=$2 ; shift 2;;
+      -D)  detec=$2 ; shift 2;;
+      -m)  chmap=$2 ; shift 2;;
+      -v)  setval=$2 ; shift 2;;
+      -f)  fnam=$2 ; shift 2;;
+      -H)  hostserv=$2  ; shift 2;;
+      -p)  port=$2 ; shift 2;;
+      -b)  HVC=$2 ; shift 2;;
+      --)  shift ; break;;
+     esac
+  done
+
+  if [ $hlp -gt 0 ]; then
+    help_dis
+    exit 2
+  fi
+
+  if [ ! -x  $HVC ]; then
+    echo " *** Error - the HV client program is missing " $HVC 
+    exit 2
+  fi
+
+#  Get the server name
+
+ ok=1
+ if [ $hostserv == "XX" ]; then
+   det=`echo $detec | cut -c1-2`
+   if [ $det == "NA" ]; then
+     hostserv=agen
+   elif [ $det == "BB" ]; then
+     hostserv=adaql1
+   else
+     ok=0
+   fi
+ fi
+
+ if [ $ok -eq 0 ]; then
+   echo " *** Error - Detector name -D "$detec " is unknown "
+   help_dis
+   exit 2
+ fi
+
+ ok=0
+ for i in GET get SET set MAPS maps ; do
+   [ $comm == $i ] && ok=1
+ done
+ if [ $ok -eq 0 ]; then
+   echo " *** Error - server command -c "$comm " is unknown "
+   help_dis
+   exit 2
+ fi
+
+# Just print the maps
+
+ if [ "$comm" == "MAPS" ]; then
+    $HVC -h $hostserv -p $port -m 'get maplist' | sed s"/^C/ /" 
+    exit 2
+ fi
+
+#  Is the HV frame command valid?
+
+ ok=0
+ j=0
+ for i in DV CE MV MC ST; do
+   let $((j++))
+   if [ "$hvpar" == "$i" ]; then 
+     [ "$j" -le 2 ] || [ "$comm" == "GET" ] && ok=1
+   fi 
+ done
+
+ if [ $ok -eq 0 ]; then
+   echo " *** Error - Wrong combination -c "$comm " and -P "$hvpar
+   help_dis
+   exit 2
+ fi
+
+ if [ "$comm" == "SET" ]; then 
+   if [ "$fnam" == "XX" ]; then
+     if [ "$setval" == "XX" ]; then
+       echo " *** Error - for the SET operation -c "$comm " the value -c ..., of file -f ... should be defined"
+       help_dis
+       exit 2
+     fi
+   else
+     if [ ! -s "$fnam" ]; then
+       echo " *** Error - for the SET operation -c "$comm " filename set -f "$fnam " is missing"
+       help_dis
+       exit 2
+     fi 
+   fi
+ fi
+
+ #echo $hvpar " " $detec " " $chmap " " $hostserv " " $port
+ #echo $HVC -h $hostserv -p $port -m 'get maplist' 
+ $HVC -h $hostserv -p $port -m 'get maplist' > ${ftmp[1]}
+#  cp tmptmp ${ftmp[1]} # test
+ head -1 ${ftmp[1]} | grep -i error >/dev/null ; ok=$?
+ 
+ if [ $ok -eq 0 ]; then
+   echo " *** Server at host " $hostserv " is not properly responding"
+   exit_proc
+   exit 2
+ fi
+
+ lin=`cat ${ftmp[1]} | sed s"/^C/ /" | awk -v t=$detec ' $1 ~ t {print $2" "$3" "$4" "$5}'` 
+ nw=`echo $lin | wc -w`
+ if [ $nw -lt 4 ]; then
+   echo " *** Map name "$chmap " is missing or not properly set in the server list :"
+   echo $lin
+   cat ${ftmp[1]}
+   exit_proc
+   exit 2
+ fi
+
+ if [ "$comm" == "SET" ]; then
+   $HVC -h $hostserv -p $port -m "$detec $comm $hvpar $chmap $setval"
+   exit_proc
+   exit 0
+ fi
+
+# comm=GET
+ $HVC -h $hostserv -p $port -m "$detec $comm $hvpar $chmap"   | sed s"/^C/ /" | sed s'/\*/\&/'g > ${ftmp[2]}
+# $HVC -h $hostserv -p $port -m "$detec $comm $hvpar $chmap"  # | sed s"/^C/ /" 
+# echo  $HVC -h $hostserv -p $port -m "$detec $comm $hvpar $chmap"  # | sed s"/^C/ /" 
+
+ head -1 ${ftmp[2]} | grep -i error >/dev/null ; ok=$?
+ 
+ if [ $ok -eq 0 ]; then
+   echo " *** Error in the HV server response:"
+   cat ${ftmp[2]}
+   exit_proc
+   exit 1
+ fi
+
+ aa=`echo $chmap | cut -d, -f1`
+ echo $aa | grep '\:' > /dev/null ; onenmb=$?
+ if [ "$onenmb" -eq 1 ]; then
+   ix1=$aa
+   nx=1
+   ix2=$ix1
+ else
+   ix1=`echo $aa | cut -d: -f1`
+   ix2=`echo $aa | cut -d: -f2`
+   nx=$((ix2-ix1+1))
+ fi   
+
+ aa=`echo $chmap | cut -d, -f2`
+ echo $aa | grep '\:' > /dev/null ; onenmb=$?
+ if [ "$onenmb" -eq 1 ]; then
+   iy1=$aa
+   ny=1
+   iy2=$iy1
+ else
+   iy1=`echo $aa | cut -d: -f1`
+   iy2=`echo $aa | cut -d: -f2`
+   ny=$((iy2-iy1+1))
+ fi   
+
+# echo $nx" "$ix1" "$ix2
+# echo $ny" "$iy1" "$iy2
+
+ iy=$iy1
+ ix=$ix1
+ newl=1
+ nw=`cat ${ftmp[2]} | wc -w`
+# cat ${ftmp[2]}
+# cat ${ftmp[1]}
+ for i in `cat ${ftmp[2]}`; do
+#   [ "$iy" -eq "$iy1" ] && printf " %3d " $iy
+#   [ "$ix" -eq "$ix1" ] && printf " %3d " $iy
+#   if [ "$ny" -gt 1 -a "$newl" -eq 1 ]; then
+#     printf "%3d : " $iy
+#     newl=0
+#   fi
+  if [ "$i" == "&&&" ]; then
+     printf "   XXX "
+   else
+     printf "%6.0f " "$i"
+   fi
+#   let $((ix++))
+#   if [ "$ix" -gt "$ix2" ]; then
+#     let $((iy++))
+#     ix=$ix1
+#     printf "\n"
+#     newl=1
+#   fi
+ done
+ 
+ printf "\n"
+
+ exit_proc
+
+ exit 0
+
+

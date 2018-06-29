@@ -1,0 +1,483 @@
+
+package hvmap;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.event.*;
+import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
+
+/**
+ * HVMapDialog - show dialog window to add/remove map to HVMapList
+ * @version 1.1
+ * Last update: 25-Jul-05 
+ */
+
+/**
+ * Use this modal dialog to let the user choose one string from a long
+ * list.  See the main method for an example of using ListDialog.  The
+ * basics:
+ * <pre>
+    HVListDialog.initialize(componentInControllingFrame,
+                          "Dialog Title",
+                          "A description of the list:");
+ * </pre>
+ */
+public class HVMapDialog extends JDialog 
+                           implements ListSelectionListener  {
+    private static HVMapDialog dialog;
+    private static String value = "";
+    private JList list;
+    private DefaultListModel listModel;
+    private HVMapList hvList;
+
+    private static final String addString = "Add";
+    private static final String removeString = "Remove";
+    private static final String closeString = "Close";
+    private JButton removeButton;
+    private JTextField inputName;
+    private JTextField inputSizeX;
+    private JTextField inputSizeY;
+    private JTextField inputFileName;
+    private JCheckBox  checkX;
+    private JCheckBox  checkY;
+
+
+    /**
+     * Set up the dialog.  The first argument can be null,
+     * but it really should be a component in the dialog's
+     * controlling frame.
+     */
+    public static void initialize(Component comp,
+                                  String title,
+                                  String labelText) {
+        Frame frame = JOptionPane.getFrameForComponent(comp);
+        dialog = new HVMapDialog(frame, title, labelText);
+    }
+
+    /**
+     * Show the initialized dialog.  The first argument should
+     * be null if you want the dialog to come up in the center
+     * of the screen.  Otherwise, the argument should be the
+     * component on top of which the dialog should appear.
+     */
+    public static String showDialog(Component comp, String initialValue) {
+        if (dialog != null) {
+	    //            dialog.setValue(initialValue);
+            dialog.setLocationRelativeTo(comp);
+            dialog.setVisible(true);
+        } else {
+            System.err.println("HVMapDialog requires you to call initialize "
+                               + "before calling showDialog.");
+        }
+        return value;
+    }
+
+    private void setValue(String newValue) {
+        value = newValue;
+        list.setSelectedValue(value, true);
+    }
+
+    private HVMapDialog(Frame frame, String title,
+                       String labelText) {
+        super(frame, title, true);
+
+        Border empty5 = BorderFactory.createEmptyBorder(5,5,5,5);
+        Border loweredbevel = BorderFactory.createLoweredBevelBorder();
+        Border compound5 = BorderFactory.createCompoundBorder(empty5,loweredbevel);
+
+        Border empty510 = BorderFactory.createEmptyBorder(5,10,5,10);
+        Border compound510 = BorderFactory.createCompoundBorder(empty510,loweredbevel);
+ 
+        Border blackline = BorderFactory.createLineBorder(Color.black);
+        Border empty10 = BorderFactory.createEmptyBorder(10,10,10,10);
+        Border raisedbevel = BorderFactory.createRaisedBevelBorder();
+        Border compound1 = BorderFactory.createCompoundBorder(
+                                      raisedbevel,loweredbevel );
+        Border compound2 = BorderFactory.createCompoundBorder(
+                                      blackline, empty510);
+        Border compound3 = BorderFactory.createCompoundBorder(
+                                       compound1,empty10);
+
+	hvList = new HVMapList();
+
+        listModel = new DefaultListModel();
+	if (hvList.getMapNum() == 0) {
+		    listModel.addElement((String)hvList.defaultName);
+		    //System.out.println("add default host: "+hvList.defaultName);
+	}
+
+	for(int i=0;i<hvList.getMapNum();i++) {
+	    listModel.addElement((String)hvList.getMapName().get(i));
+	}
+
+        //Create the list and put it in a scroll pane
+        list = new JList(listModel);
+        list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+	//       list.setSelectedIndex(0);
+        list.addListSelectionListener(this);
+
+ 
+        JScrollPane listScrollPane = new JScrollPane(list);
+	        listScrollPane.setPreferredSize(new Dimension(250, 60));
+        //XXX: Must do the following, too, or else the scroller thinks
+        //XXX: it's taller than it is:
+        listScrollPane.setMinimumSize(new Dimension(250, 60));
+        listScrollPane.setAlignmentX(CENTER_ALIGNMENT);
+
+        JPanel listPane = new JPanel();
+        listPane.setLayout(new BoxLayout(listPane, BoxLayout.Y_AXIS));
+	JLabel label = new JLabel(labelText);
+        //label.setLabelFor(list);
+	label.setHorizontalAlignment(JLabel.CENTER );
+        listPane.add(label);
+	listPane.add(Box.createRigidArea(new Dimension(0,5)));
+        listPane.add(listScrollPane);
+        listPane.setBorder(compound2);
+
+        JButton addButton = new JButton(addString);
+        addButton.setActionCommand(addString);
+        addButton.addActionListener(new AddListener());
+
+        removeButton = new JButton(removeString);
+        removeButton.setActionCommand(removeString);
+        removeButton.addActionListener(new RemoveListener());
+
+        JButton closeButton = new JButton(closeString);
+        closeButton.setActionCommand(closeString);
+        closeButton.addActionListener(new CloseListener());
+
+	// input fields
+        inputName = new JTextField(15);
+        //inputName.addActionListener(new AddListener());
+
+	//        inputName.setText(name);
+	inputName.setFont(new Font("Serif", Font.PLAIN, 16));
+
+        inputSizeX = new JTextField(5);
+	// inputSizeX.addActionListener(new AddListener());
+	// inputSizeX.setText(name);
+	inputSizeX.setFont(new Font("Serif", Font.PLAIN, 16));
+
+        inputSizeY = new JTextField(5);
+        //inputSizeY.addActionListener(new AddListener());
+        //inputSizeY.setText(name);
+	inputSizeY.setFont(new Font("Serif", Font.PLAIN, 16));
+
+        inputFileName = new JTextField(15);
+        //inputFileName.addActionListener(new AddListener());
+        //inputFileName.setText(name);
+	inputFileName.setFont(new Font("Serif", Font.PLAIN, 16));
+	
+	// check box
+	checkX = new JCheckBox("oposite");
+	checkX.addItemListener(new CheckBoxListener());
+
+	checkY = new JCheckBox("oposite");
+	checkY.addItemListener(new CheckBoxListener());
+
+	// labels
+	JLabel	nameLabel = new JLabel("Map Name");
+        nameLabel.setLabelFor(inputName);
+	JLabel	fileLabel = new JLabel("Map File Name");
+        fileLabel.setLabelFor(inputFileName);
+	JLabel	sizeXLabel = new JLabel("Size X");
+	JLabel	sizeYLabel = new JLabel("Size Y");
+        sizeXLabel.setLabelFor(inputSizeX);
+        sizeYLabel.setLabelFor(inputSizeY);
+	JLabel	dirLabel = new JLabel("Direction");
+
+	// map name panel
+	JPanel namePane = new JPanel();
+	namePane.setLayout(new BoxLayout(namePane, BoxLayout.X_AXIS));
+	namePane.setBorder(BorderFactory.createEmptyBorder(5, 10, 5,10 ));
+	namePane.add(nameLabel);
+	namePane.add(Box.createRigidArea(new Dimension(5,0)));
+	namePane.add(inputName);
+
+	// file name panel
+	JPanel filePane = new JPanel();
+	filePane.setLayout(new BoxLayout(filePane, BoxLayout.X_AXIS));
+	filePane.setBorder(BorderFactory.createEmptyBorder(5, 10, 5,10 ));
+	filePane.add(fileLabel);
+	filePane.add(Box.createRigidArea(new Dimension(5,0)));
+	filePane.add(inputFileName);
+
+	// size x and direction panel
+	JPanel sizeXPane = new JPanel();
+	sizeXPane.setLayout(new BoxLayout(sizeXPane, BoxLayout.X_AXIS));
+	sizeXPane.setBorder(BorderFactory.createEmptyBorder(5,10, 5, 10));
+	sizeXPane.add(sizeXLabel);
+	sizeXPane.add(Box.createRigidArea(new Dimension(10,0)));
+	sizeXPane.add(inputSizeX);
+	sizeXPane.add(Box.createRigidArea(new Dimension(10,0)));
+	sizeXPane.add(checkX);
+
+	// size y and direction panel
+	JPanel sizeYPane = new JPanel();
+	sizeYPane.setLayout(new BoxLayout(sizeYPane, BoxLayout.X_AXIS));
+	sizeYPane.setBorder(BorderFactory.createEmptyBorder(5,10, 5, 10));
+	sizeYPane.add(sizeYLabel);
+	sizeYPane.add(Box.createRigidArea(new Dimension(5,0)));
+	sizeYPane.add(inputSizeY);
+	sizeYPane.add(Box.createRigidArea(new Dimension(5,0)));
+	sizeYPane.add(checkY);
+	
+	// parameters panel
+	JPanel paramPane = new JPanel();
+	paramPane.setLayout(new BoxLayout(paramPane, BoxLayout.Y_AXIS));
+	paramPane.add(namePane, BorderLayout.CENTER);
+	paramPane.add(filePane, BorderLayout.CENTER);
+	paramPane.add(sizeXPane, BorderLayout.CENTER);
+	paramPane.add(sizeYPane, BorderLayout.CENTER);
+	paramPane.setBorder(compound2);
+        //Create a panel that uses FlowLayout (the default).
+        JPanel buttonPane = new JPanel();
+        buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.X_AXIS));
+ 
+	//	buttonPane.add(inputName);
+	buttonPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+	buttonPane.add(Box.createHorizontalGlue());
+        buttonPane.add(addButton);
+        buttonPane.add(removeButton);
+        buttonPane.add(Box.createRigidArea(new Dimension(10, 0)));
+        buttonPane.add(closeButton);
+	buttonPane.setBorder(compound2);
+
+        Container contentPane = getContentPane();
+	contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
+        contentPane.add(listPane, BorderLayout.CENTER);
+        contentPane.add(paramPane, BorderLayout.CENTER);
+        contentPane.add(buttonPane, BorderLayout.CENTER);
+
+        list.setSelectedIndex(0);
+	//        String name = listModel.getElementAt(
+        //                      list.getSelectedIndex()).toString();
+	
+	pack();
+    }
+
+   class CheckBoxListener implements ItemListener {
+       public void  itemStateChanged(ItemEvent e) {
+            //This method can be called only if
+            //there's a valid selection
+            //so go ahead and remove whatever's selected.
+	   Object source = e.getItemSelectable();
+	   if (source == checkX) {
+	       //System.out.println("source:"+source);
+	   }
+	   if (source == checkY) {
+	       //System.out.println("source:"+source);
+	   }
+
+	   if (e.getStateChange() == ItemEvent.DESELECTED) {
+	       
+	   }
+        }
+    }
+
+   class RemoveListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            //This method can be called only if
+            //there's a valid selection
+            //so go ahead and remove whatever's selected.
+            int index = list.getSelectedIndex();
+	    // remove name from hvList	  	  
+	    hvList.removeMapName((String)listModel.elementAt(index));
+            listModel.remove(index);
+
+            int size = listModel.getSize();
+
+            if (size == 0) {
+            //Nobody's left, disable firing.
+                removeButton.setEnabled(false);
+
+            } else {
+            //Adjust the selection.
+                if (index == listModel.getSize())//removed item in last position
+                    index--;
+                list.setSelectedIndex(index);   //otherwise select same index
+            }
+        }
+    }
+
+    //This listener is shared by the text field and the add button
+    class AddListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+	    String s;
+            //User didn't type in a name...
+            if (inputName.getText().equals("")) {
+                Toolkit.getDefaultToolkit().beep();
+                return;
+            }
+            if (inputFileName.getText().equals("")) {
+                Toolkit.getDefaultToolkit().beep();
+                return;
+            }
+            if (inputSizeX.getText().equals("")) {
+                Toolkit.getDefaultToolkit().beep();
+                return;
+            }
+            if (inputSizeY.getText().equals("")) {
+                Toolkit.getDefaultToolkit().beep();
+                return;
+            }
+
+            int index = list.getSelectedIndex();
+            int size = listModel.getSize();
+	    //System.out.println("index:"+index + " size:"+size);
+	    
+            //If no selection or if item in last position is selected,
+            //add the new add to end of list, and select new add.
+	    s = inputName.getText();
+	    // comment 01-March-02
+	    //	    s = s.toLowerCase();
+	    // check if no port number
+	    if (s.indexOf(":") == -1) {
+		//		s = s + ":" + hvList.defaultPort;
+	    }   
+	    if (s.endsWith(":")) {
+		//		s = s + hvList.defaultPort;
+	    }
+	    
+	    s=s.trim();
+	    if (listModel.contains(s)) {
+                Toolkit.getDefaultToolkit().beep();
+                return;		
+	    }
+	    
+	    // listModel.addElement(s);
+	    if((index == 0)&&(size <= 1)) {
+		listModel.addElement(s);
+		list.setSelectedIndex(index);
+		hvList.addMapName(s);
+		hvList.addFileName(inputFileName.getText().trim());
+		s=inputSizeX.getText().trim()+":"+inputSizeY.getText().trim();
+		String chkb = new String("1");
+		if(checkX.isSelected()) chkb="0";
+		s=s+":"+chkb;
+		
+		if(checkY.isSelected()) chkb="0";
+		else chkb="1";
+		s=s+":"+chkb;
+		hvList.addMapSize(s);
+	
+
+	    } else {
+		//	listModel.insertElementAt(s, index+1);
+		//list.setSelectedIndex(index+1);
+		//hvList.insertMapName(index+1,s);
+
+		listModel.addElement(s);
+		list.setSelectedIndex(index);
+		hvList.addMapName(s);
+		hvList.addFileName(inputFileName.getText().trim());
+		s=inputSizeX.getText().trim()+":"+inputSizeY.getText().trim();
+		String chkb = new String("1");
+		if(checkX.isSelected()) chkb="0";
+		s=s+":"+chkb;
+		if(checkY.isSelected()) chkb="0";
+		s=s+":"+chkb;
+		hvList.addMapSize(s);
+	    }
+
+	    
+	    //	    hvList.addHostName(s);
+	    //list.setSelectedIndex(size);
+	    
+            //Otherwise insert the new add after the current selection,
+            //and select new add.
+	    
+	}
+    }
+ 
+   //This listener is shared by close button
+    class CloseListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            if(listModel.getSize()>0) {
+		hvList.saveParameters();
+	    }
+	    HVMapDialog.dialog.setVisible(false);   
+        }
+    }
+
+
+    public void valueChanged(ListSelectionEvent e) {
+        if (e.getValueIsAdjusting() == false) {
+
+            if (list.getSelectedIndex() == -1) {
+            //No selection, disable remove button.
+                removeButton.setEnabled(false);
+                inputName.setText("");
+
+            } else {
+            //Selection, update text field.
+                removeButton.setEnabled(true);
+                String name = list.getSelectedValue().toString();
+                inputName.setText(name);
+		int indx = hvList.getMapName().indexOf(name);
+		if(indx!=-1) {
+		    inputFileName.setText((String)hvList.getFileName().elementAt(indx));
+		    String s = (String)hvList.getMapSize().elementAt(indx);
+		    inputSizeX.setText(hvList.getToken(1,s));
+		    inputSizeY.setText(hvList.getToken(2,s));
+
+		}
+            }
+        }
+    }
+
+    /**
+     * This is here so that you can view ListDialog even if you
+     * haven't written the code to include it in a program. 
+     */
+    public static void main(String[] args) {
+        String[] names = {"Arlo", "Cosmo", "Elmo", "Hugo",
+                          "Jethro", "Laszlo", "Milo", "Nemo",
+                          "Otto", "Ringo", "Rocco", "Rollo"};
+        JFrame f = new JFrame("Name That Baby");
+        f.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                 System.exit(0);
+            }
+        });
+
+        JLabel intro = new JLabel("The chosen name:");
+
+        final JLabel name = new JLabel("Cosmo");
+        intro.setLabelFor(name);
+        name.setForeground(Color.black);
+
+        JButton button = new JButton("Pick a new name...");
+        HVMapDialog.initialize(f, "Name Chooser",
+                              "Map List");
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String selectedName = HVMapDialog.showDialog(null,
+                                                            name.getText());
+                name.setText(selectedName);
+            }
+        });
+
+        JPanel contentPane = new JPanel();
+        f.setContentPane(contentPane);
+        contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
+        contentPane.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+
+        contentPane.add(intro);
+        contentPane.add(name);
+        contentPane.add(Box.createRigidArea(new Dimension(0,10)));
+        contentPane.add(button);
+        intro.setAlignmentX(JComponent.CENTER_ALIGNMENT);
+        name.setAlignmentX(JComponent.CENTER_ALIGNMENT);
+        button.setAlignmentX(JComponent.CENTER_ALIGNMENT);
+
+        f.pack();
+        f.setVisible(true);
+    }
+}
+
+
+
+

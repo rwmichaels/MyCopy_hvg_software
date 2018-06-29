@@ -1,0 +1,1 @@
+/apps/java/PRO/bin/jar cvf HVS.jar *.class *.wav hvframe/*.class hvmap/*.class images hvserver/*.class hvtools/*.class socket/*.class

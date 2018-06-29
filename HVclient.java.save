@@ -1,0 +1,244 @@
+//Modd&Add: 04-Oct-01: 
+package hvframe;
+
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+
+import hvtools.*;
+
+/* HVclient - this class runs as thread, makes connection to server
+ *  (high voltage  mainframe) by TCP/IP protocol
+ * and transfer messages to this host and receives responses from it
+ * @version 1.1 
+ * Last update: 17-May-01 
+ */
+public class HVclient extends Thread  {
+    Socket hvSocket = null;
+    PrintWriter hvout = null;
+    BufferedReader hvin = null;
+    String command = null;
+    private HVMessage hvmess;
+    boolean frozen = false;
+    public boolean flag = false;
+    private String server = null;
+    private int port = 0;
+    private String status = new String("OK");
+    private boolean errStatus = false;
+    boolean fgetconnection = false;
+    HVListener notifys ;
+
+    // constructor 
+    public HVclient(String HVServer, int hvport, HVMessage hvmess,
+		    HVListener notifys) {
+	super(HVServer);
+	this.hvmess = hvmess ;	
+	server = HVServer;
+	port =  hvport;
+	this.notifys = notifys;
+	// init connection to server
+	try {
+	    hvSocket = new Socket(HVServer, hvport);
+	    hvout = new PrintWriter(hvSocket.getOutputStream());
+            hvin = new BufferedReader(new InputStreamReader(hvSocket.getInputStream()));
+        } catch (UnknownHostException e) {
+	    status = "Don't know about host: " + HVServer+":" +hvport;
+            System.err.println(status);
+	    errStatus = true;
+	    notifys.updateStatus(status);
+	    // System.exit(1);
+        } catch (IOException e) {
+	    status ="Couldn't get I/O for the connection to:" + HVServer;
+            System.err.println(status);
+	    errStatus = true;
+	    notifys.updateStatus(status);
+	    // System.exit(1);
+        }
+
+
+	//System.out.println("Sock:"+hvSocket+"\n  out:"+hvout+"\n  in:"+hvin);
+    }
+    
+    public  String getStatus() {
+	//	notifyAll();
+	return status ;
+    }
+
+    public boolean getErrStatus() {
+	//notifyAll();
+	return errStatus ;
+    }
+
+    public void setFrozen(boolean setfr) {
+	frozen = setfr;
+	//	notifyAll();
+   }
+    
+    private void  reopen() {
+	fgetconnection = false;
+	errStatus = true;
+	int cnt = 0;
+	// close connection to server and reopen
+	try {
+	    close() ;
+	} catch (IOException e) {
+            System.err.println("Couldn't close the connection to:" + server);
+            System.exit(1);
+        }
+	while (!fgetconnection) {
+	    try{
+		sleep(20000);
+	    } catch (InterruptedException eint) {
+		System.err.println("\nInterrupt Exception "+eint); 
+	    }
+	    //try to open new connection
+	    try {
+		hvSocket = new Socket(server, port);
+		hvout = new PrintWriter(hvSocket.getOutputStream());
+		hvin = new BufferedReader(new InputStreamReader(hvSocket.getInputStream()));
+		fgetconnection = true;
+		errStatus = false;
+	    } catch (UnknownHostException e) {
+		System.err.println("Don't know about host:" + server);
+		//		System.exit(1);
+	    } catch (IOException e) {
+		System.err.println("Couldn't get I/O for the connection to:" + server);
+		cnt ++;
+		if(cnt>10) {
+		    System.err.println("Stop hvclient after "+cnt+" attemps to connection to:" + server);
+		    cnt =0;
+		    frozen = false;
+		    //System.exit(1);
+		}
+	    }
+	}
+    }
+    
+    
+    public void run() {
+	String fromUser=null;
+	String toUser=null;
+	String s ="";
+	int   c = 0;
+	boolean nextmess = false;
+	long cnt = 0;
+	boolean fexit =false;
+
+	//	    while (fromUser != null) {
+	do {
+	    fromUser=hvmess.get();	    
+	    //    notifys.updateStatus("Client: " + fromUser);	
+	    fromUser=fromUser.concat("\0");	    
+	    System.out.println("Client to "+ server + ":" + fromUser);
+
+            // send message from user to server
+	    hvout.print(fromUser); // 'println' method adds endline character 0x0A
+	    //hvout.flush();   // after 'print' method the flush() method is used
+	   if(hvout.checkError()) System.err.println("ERROR in hvclient.hvout.print()"); 
+	    // get ressponse(s) from server	    
+	    
+	   //	    System.out.println("Waiting response");
+	    StringBuffer sb = new StringBuffer();
+	    do {
+		// loop on multiple response
+		do {
+		    cnt = 0;
+		    fexit =false;
+		    //loop on response string
+
+		    try {
+			while(!hvin.ready()) {			    
+			    //System.out.println("("+cnt+")hvin - not ready...");
+			    //System.out.println("SBUF:<"+sb+">");
+			    try{
+				sleep(100);
+			    } catch (InterruptedException eint) {
+				System.err.println("\nInterrupt Exception "+eint); 
+			    }
+			    cnt++;
+			    if(cnt>500) {
+				cnt = 0;	
+				errStatus = true;
+				frozen = false;
+				notifys.updateStatus("HVclient: NO response from server: "+server);
+				if(false) {
+				    //try reconnect
+				    reopen();
+				    if(fgetconnection) {
+					System.out.println("REOPEN connection to " +server+"\n");
+					notifys.updateStatus("REOPEN connection to "+server);
+					//    System.exit(-1);
+					
+				//try repeat last command  to server
+					hvout.print(fromUser);
+					if(hvout.checkError()) {
+					    System.err.println("ERROR in hvout.print()");
+					    notifys.updateStatus("ERROR in hvout.print()");
+					}
+					fexit = true;
+				    } else {
+					frozen = false;
+				    }
+				}
+			    }
+			    if(!frozen) break;
+			} 
+
+			if(frozen) c = hvin.read();
+		    } catch (IOException e) {
+			System.err.println("Couldn't get I/O in.read()");
+			errStatus = true;
+			frozen = false;
+			//System.exit(1);
+		    }
+		    
+		
+		    //System.out.print(" :" + String.valueOf(c) );
+		    s = String.valueOf((char )c);	      
+		    sb = sb.append(s);
+		} while ((c!=0)&&frozen);
+		
+		if (frozen) {
+		    toUser=sb.toString();
+		    sb = sb.delete(0,sb.length());
+		
+		    nextmess = false;
+		
+		    if(toUser.startsWith("C")) nextmess = true;
+
+		    hvmess.put(toUser);
+		}
+	    } while (nextmess&&frozen);
+	} while (frozen);
+    } // end run() method 
+    
+ 
+ // stop thread and close connection
+    public void stopClient() {
+ 	frozen = false;
+ 	hvout.close();
+	try {
+	    hvin.close();
+	    hvSocket.close();
+	} catch (IOException e) {
+	    System.err.println("Couldn't close I/O for the connection:" +hvSocket);
+	    //System.exit(1);
+	}
+  }
+
+    public void close() throws IOException {
+	hvout.close();
+	try {
+	    hvin.close();
+	    hvSocket.close();
+	} catch (IOException e) {
+	    System.err.println("Couldn't close I/O for the connection:" +hvSocket);
+	    //System.exit(1);
+	}
+	
+    } // end close() method
+    
+}

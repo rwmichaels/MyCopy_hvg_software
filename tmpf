@@ -1,0 +1,122 @@
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0  2005 ?        00:00:43 init
+root         2     0  0  2005 ?        00:00:00 [migration/0]
+root         3     0  0  2005 ?        00:00:00 [migration/1]
+root         4     1  0  2005 ?        00:00:02 [keventd]
+root         5     1  0  2005 ?        00:00:00 [ksoftirqd/0]
+root         6     1  0  2005 ?        00:00:00 [ksoftirqd/1]
+root         9     1  0  2005 ?        00:00:00 [bdflush]
+root         7     1  0  2005 ?        00:01:51 [kswapd]
+root         8     1  0  2005 ?        00:07:11 [kscand]
+root        10     1  0  2005 ?        00:00:21 [kupdated]
+root        11     1  0  2005 ?        00:00:00 [mdrecoveryd]
+root        19     1  0  2005 ?        00:00:00 [scsi_eh_0]
+root        22     1  0  2005 ?        00:00:17 [kjournald]
+root        73     1  0  2005 ?        00:00:00 [khubd]
+root       514     1  0  2005 ?        00:00:00 [kjournald]
+root       515     1  0  2005 ?        00:00:12 [kjournald]
+root       516     1  0  2005 ?        00:00:03 [kjournald]
+root       517     1  0  2005 ?        00:00:00 [kjournald]
+root      2720     1  0  2005 ?        00:00:06 syslogd -m 0
+root      2724     1  0  2005 ?        00:00:00 klogd -x
+root      2735     1  0  2005 ?        00:06:12 irqbalance
+rpc       2744     1  0  2005 ?        00:00:09 portmap
+rpcuser   2764     1  0  2005 ?        00:00:00 rpc.statd
+root      2812     1  0  2005 ?        00:00:17 ypbind
+root      2949     1  0  2005 ?        00:01:44 /usr/sbin/automount --timeout=60
+root      3012     1  0  2005 ?        00:01:40 /usr/sbin/automount --timeout=60
+root      3055     1  0  2005 ?        00:01:40 /usr/sbin/automount --timeout=60
+root      3162     1  0  2005 ?        00:03:23 [rpciod]
+root      3165     1  0  2005 ?        00:00:00 [lockd]
+root      3179     1  0  2005 ?        00:01:37 /usr/sbin/automount --timeout=60
+root      3210     1  0  2005 ?        00:01:45 /usr/sbin/automount --timeout=60
+nscd      3226     1  0  2005 ?        00:00:11 /usr/sbin/nscd
+root      3269     1  0  2005 ?        00:00:26 /usr/sbin/sshd
+root      3285     1  0  2005 ?        00:00:00 xinetd -stayalive -pidfile /var/
+ntp       3299     1  0  2005 ?        00:02:22 ntpd -U ntp -p /var/run/ntpd.pid
+root      3321     1  0  2005 ?        00:00:00 rpc.rquotad
+root      3326     1  0  2005 ?        00:00:00 [nfsd]
+root      3327     1  0  2005 ?        00:00:00 [nfsd]
+root      3328     1  0  2005 ?        00:00:00 [nfsd]
+root      3329     1  0  2005 ?        00:00:00 [nfsd]
+root      3330     1  0  2005 ?        00:00:00 [nfsd]
+root      3331     1  0  2005 ?        00:00:00 [nfsd]
+root      3332     1  0  2005 ?        00:00:00 [nfsd]
+root      3333     1  0  2005 ?        00:00:00 [nfsd]
+root      3337     1  0  2005 ?        00:00:00 rpc.mountd
+root      3358     1  0  2005 ?        00:01:58 sendmail: accepting connections
+smmsp     3367     1  0  2005 ?        00:00:00 sendmail: Queue runner@01:00:00 
+root      3378     1  0  2005 ?        00:01:49 gpm -t imps2 -m /dev/mouse
+root      3388     1  0  2005 ?        00:00:04 crond
+xfs       3412     1  0  2005 ?        00:00:03 xfs -droppriv -daemon
+daemon    3422     1  0  2005 ?        00:00:01 /usr/sbin/atd
+root      3433     1  0  2005 ?        00:00:00 rhnsd --interval 240
+root      3463     1  0  2005 ?        00:00:10 mdadm --monitor --scan -f
+root      3477     1  0  2005 ?        00:00:16 mdmpd
+root      3486     1  0  2005 tty1     00:00:00 /sbin/mingetty tty1
+root      3487     1  0  2005 tty2     00:00:00 /sbin/mingetty tty2
+root      3488     1  0  2005 tty3     00:00:00 /sbin/mingetty tty3
+root      3489     1  0  2005 tty4     00:00:00 /sbin/mingetty tty4
+root      3490     1  0  2005 tty5     00:00:00 /sbin/mingetty tty5
+root      3491     1  0  2005 tty6     00:00:00 /sbin/mingetty tty6
+root      3492     1  0  2005 ?        00:00:00 /usr/bin/gdm-binary -nodaemon
+root     19919     1  0 Jan19 ?        00:00:20 cupsd
+apar     23951     1  0 Jan19 ?        00:00:00 ssh-agent
+root     30998  3492  0 Jan24 ?        00:00:00 /usr/bin/gdm-binary -nodaemon
+root     30999 30998  0 Jan24 ?        00:50:50 /usr/X11R6/bin/X :0 -auth /var/g
+adaq     31012 30998  0 Jan24 ?        00:00:00 /bin/sh /etc/xfce4/xinitrc
+adaq     31022 31012  0 Jan24 ?        00:00:00 /bin/sh /etc/xfce4/xinitrc
+adaq     31023 31022  0 Jan24 ?        00:00:11 xscreensaver -no-splash
+adaq     31027     1  0 Jan24 ?        00:00:34 xfce-mcs-manager
+adaq     31029     1  0 Jan24 ?        00:00:03 xfwm4 --daemon
+adaq     31032 31012  0 Jan24 ?        00:00:10 xftaskbar4
+adaq     31033 31012  0 Jan24 ?        00:00:03 xfdesktop
+adaq     31034 31012  0 Jan24 ?        00:00:05 xfcalendar
+adaq     31036 31012  0 Jan24 ?        00:03:29 /usr/bin/xfce4-panel
+adaq     27163     1  0 Jan25 ?        00:03:09 ./xscaler
+root     30867  3269  0 Jan25 ?        00:00:00 sshd: adaq [priv]
+adaq     30874 30867  0 Jan25 ?        00:07:37 sshd: adaq@pts/1
+adaq     30877 30874  0 Jan25 pts/1    00:00:00 -bash
+adaq     31203 30877  0 Jan25 pts/1    00:08:05 analyzer
+root     32002  3269  0 Jan25 ?        00:00:00 sshd: adaq [priv]
+adaq     32005 32002  0 Jan25 ?        00:00:21 sshd: adaq@pts/4
+adaq     32007 32005  0 Jan25 pts/4    00:00:02 -bash
+adaq     31777     1  0 Jan27 ?        00:00:00 kdeinit: Running...       
+adaq     31781     1  0 Jan27 ?        00:00:00 kdeinit: dcopserver --nosid --su
+adaq     31784     1  0 Jan27 ?        00:00:01 kdeinit: klauncher        
+adaq     31786     1  0 Jan27 ?        00:11:50 kdeinit: kded             
+adaq     31791 31777  0 Jan27 ?        00:00:03 kdeinit: kio_file file /tmp/ksoc
+adaq     31811     1  0 Jan27 ?        00:00:00 kdeinit: kio_uiserver     
+root     26899  3269  0 Jan28 ?        00:00:00 sshd: adaq [priv]
+adaq     26902 26899  0 Jan28 ?        00:00:05 sshd: adaq@pts/0
+adaq     26906 26902  0 Jan28 pts/0    00:00:00 -bash
+adaq     27061     1  0 Jan28 pts/0    00:00:00 xterm
+adaq     27063 27061  0 Jan28 pts/3    00:00:00 -bash
+adaq     24142     1  0 Jan29 ?        00:00:00 xterm -ls
+adaq     24150 24142  0 Jan29 pts/5    00:00:00 -bash
+adaq     15246 32007  0 Jan29 pts/4    00:01:11 emacs e02013/ameya/analyzer-1.1-
+root     16835  3269  0 Jan30 ?        00:00:00 sshd: adaq [priv]
+adaq     16844 16835  0 Jan30 ?        00:00:00 sshd: adaq@pts/7
+adaq     16850 16844  0 Jan30 pts/7    00:00:00 -bash
+root      8072  3269  0 Jan30 ?        00:00:00 sshd: adev [priv]
+adev      8077  8072  0 Jan30 ?        00:00:04 sshd: adev@pts/6
+adev      8082  8077  0 Jan30 pts/6    00:00:00 -bash
+adev      8388  8082  0 Jan30 pts/6    00:00:00 bash
+root     30809  3269  0 08:45 ?        00:00:00 sshd: adev [priv]
+adev     30814 30809  0 08:45 ?        00:00:08 sshd: adev@pts/8
+adev     30821 30814  0 08:45 pts/8    00:00:00 -bash
+adev     31096 30821  0 08:50 pts/8    00:00:00 /bin/bash /adaqfs/home/adev/bin/
+adev     31110 31096  0 08:50 pts/8    00:00:44 /apps/java/PRO/bin/java -cp /ada
+adaq      1057     1  0 10:42 ?        00:00:00 xterm -ls
+adaq      1065  1057  0 10:42 pts/9    00:00:00 -bash
+adaq      1212  1065  0 10:45 pts/9    00:00:02 ssh agen@agen
+root      2756  3269  0 11:48 ?        00:00:00 sshd: adaq [priv]
+adaq      2758  2756  0 11:48 ?        00:00:14 sshd: adaq@pts/11
+adaq      2767  2758  0 11:48 pts/11   00:00:00 -bash
+adaq      2844  2767  0 11:48 pts/11   00:00:06 emacs aidan_firstones.cfg
+adaq      3027  2767  0 11:55 pts/11   00:00:04 emacs output.def
+adaq      3273  2767  0 12:03 pts/11   00:00:05 analyzer LoadTreeFile.C
+adaq      4722 32007  0 13:12 pts/4    00:00:04 analyzer setup.C
+root      6568  3269  1 14:31 ?        00:00:00 sshd: adev [priv]
+adev      6570  6568  0 14:31 ?        00:00:00 sshd: adev@notty
+adev      6579  6570  0 14:31 ?        00:00:00 ps -ef

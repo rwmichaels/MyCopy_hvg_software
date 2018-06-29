@@ -1,0 +1,17 @@
+#! /bin/sh
+#
+#  -- Demand HV settings on a number of staions in a certain mainframe
+#
+# parameters: mainframehostname station hv
+# example: hvdem hv01 0 -1400
+
+  mf=$1
+  st=$2
+  hv=$3
+
+
+  ./hvcli -h hv0"$mf" -p 1090 -m 'LD L'$st' DV '$hv' '$hv' '$hv' '$hv' '$hv' '$hv' '$hv' '$hv' '$hv' '$hv' '$hv' '$hv 
+
+
+
+

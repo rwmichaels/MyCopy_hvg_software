@@ -1,0 +1,88 @@
+#!/bin/bash
+# Description:
+#       Activation Script for RCS High Voltage Control.
+#       This script prevents simultaneous access to the High Voltage Control program.
+# hvs - start High Voltage System application
+#       map.file - name of key pointing to map file and location(path/filename)
+#       data.dir - name of key pointing to directory with save/load voltage settings
+#  May 4, 2001
+#  Jan 3, 2002 
+#  Jan 9, 2002 add user as 'whoami' for path resolving
+#  Jan 12,2002 add parameters for database
+#  May 27,2005 move to new directory from 'hv' to 'hvg'  
+#  Sept 14 2005 start programm from jar file
+
+# add trap
+trap 'echo "Get interrupt signal \n";  rm -f $lockfile; exit -1'  2 3 15
+
+# path to java
+jv=/apps/java/PRO/bin/java
+#username 
+user=`whoami`
+# name of map file and location
+#mfile=/home/$user/Java/hvg/hvs.map
+# name of veto map file and location
+#vmfile=/home/acalor/hv_data/hv_veto_2.map
+# name of program
+prog=HVS.jar
+# data directory with votage settings location
+ddir=/home/$user/hv_db
+# class path for HVS package
+cpath=/home/$user/Java/hvg
+
+# class path with database driver
+cp=.:/home/$user/Java/hvg:/home/$user/Java/jdbc7.2dev-1.2.jar
+
+#** define database parameters
+# db url: what type of database and ://host/dbname
+#dburl="jdbc:postgresql://adaqlr3/rcs_lg"
+
+# or only :db_name if db running on the same host
+dburl="jdbc:postgresql:rcs_lg"
+
+# db driver name from driver Doc
+dbdriver="org.postgresql.Driver"
+# db table name
+dbtable="rcs_hv_status"
+# db user name
+dbuser="postgres"
+# db password
+dbpswd="halla"
+        
+        lockfile=/tmp/`hostname`_hvs
+        if test -e $lockfile; then
+            pid=`cat $lockfile | awk '{print $2}'`
+            exists=`ps -ef | awk '{print $2}' | grep $pid`
+            if  [ "$exists" != "" ]; then 
+                echo    ""
+                echo -n "Sorry, High Voltage Control already in use by "
+                echo     `cat $lockfile | awk '{print $1}'`
+                echo     pid=$pid
+                echo    ""
+            	echo -n "Kill running process($pid) and start new one? (y/no) "
+		read answ
+		case $answ in
+		    y*) echo -n "Killing..."; rm -f $lockfile; kill $pid; echo " Done." ;;
+		    n*) 
+		esac
+		echo    ""
+            else
+		rm -f $lockfile
+            fi
+        fi
+        if ! test -e $lockfile; then
+            echo `whoami` $$ > $lockfile
+	    $jv -version
+	    echo "Starting application..."
+	    exec $jv -jar -cp $cp -Dmap.file=$mfile -Dvmap.file=$vmfile -Ddata.dir=$ddir $prog $dburl $dbdriver $dbuser $dbpswd $dbtable
+  
+
+#&>/dev/null &
+
+            rm -f $lockfile
+        fi
+
+exit 0
+
+
+

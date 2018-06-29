@@ -1,0 +1,926 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.75 [en] (X11; U; SunOS 5.6 sun4u) [Netscape]">
+</head>
+<body text="#000000" bgcolor="#FFFFFF" link="#0000EE" vlink="#551A8B" alink="#FF0000">
+
+<hr>
+<center>
+<h3>
+<a NAME="Top"></a></h3></center>
+
+<center>
+<h3>
+High Voltage System</h3></center>
+The High Voltage System Program (HVS) has been crated to controlling and monitoring 
+of the high voltage mainframes type of LeCroy-1458 over Ethernet network using TCP/IP protocol 
+or telnet protocol in case if portserver and mainframe's serial interface are used. 
+This program has GUI (Main Window) to control and setup high voltage mainframes parameters 
+by the user and it runs server to accept and process external control requests.<br>
+
+<h3>
+Contents</h3>
+
+<font color="#3333FF">Main Window</font>
+
+<ul>
+<font color="#3333FF">Menu Bar</font>
+</ul>
+
+<ul>
+<ul>
+
+<font color="#3333FF"><a href="#File">File</a></font><br>
+
+<font color="#3333FF"><a href="#Edit">Edit</a></font><br>
+
+<font color="#3333FF"><a href="#View">View</a></font><br>
+
+<font color="#3333FF"><a href="#Map">Map</a></font><br>
+
+<!--<font color="#3333FF"><a href="#DataBase">DataBase</a></font><br>
+--->
+<font color="#3333FF"><a href="#Tools">Tools</a></font><br>
+
+<font color="#3333FF"><a href="#Help">Help</a></font><br>
+</ul>
+
+<font color="#3333FF"><a href="#Table">Table</a></font><br>
+
+<font color="#3333FF">Status Window</font><br>
+</ul>
+
+<font color="#3333FF"><a href="#HVServer">HVS Server</a></font><br>
+
+<font color="#3333FF"><a href="#HVAlarms">Alarms</a></font><br>
+
+<font color="#3333FF"><a href="#HVStart">Starting HVS program</a></font><br>
+<font color="#3333FF"><a href="#PortServer">Port Serever</a></font><br>
+<font color="#3333FF"><a href="#HVMainframe">HV Mainframe LeCroy-1458</a></font><br>
+
+<p>
+<dt>
+<b>Keywords:</b></dt>
+
+<blockquote>
+<li>
+<i>hvframe, hvmainframe, mainframe</i> - means high voltage mainframe
+LeCroy-1458</li>
+
+<li>
+<i>hvmodule, hvunit</i> - means high voltage unit(module) installed
+in mainframe.</li>
+
+<li>
+<i>hvchannel, channel</i> - means high voltage channel of module.</li>
+
+<li>
+<b>HVFrame</b>  - means java class representing properties of
+the mainframe</li>
+
+<li>
+<b>HVmodule</b> - means java class representing properties
+of the module.</li>
+
+<li>
+<b>HVchannel</b> - means java class representing properties
+of the channel.<br>
+
+</blockquote>
+
+<h3>
+Main Window</h3>
+<p>
+<ul><center>
+<img SRC="images/hvsmain.jpg" ALT="HVS Main Window"  align=CENTER></a>
+</center></ul>
+
+
+<dd>
+Main Window shows Menu Bar,&nbsp; <a href="#Table">Table</a> , and Status
+Window.</dd><br>
+
+<dd>
+Menu bar includes next menu items :</dd><br>
+
+<center>
+<dd>
+<b>'<a href="#File">File</a>', '<a href="#Edit">Edit</a>', '<a href="#View">View</a>', '<a href="#Map">Map</a>', '<a href="#Tools">Tools</a>' , '<a href="#Help">Help</a>'</b></dd></center>
+
+<center>
+<h3>
+<a NAME="HVStart"></a></h3></center>
+
+<center>
+<h3>
+Start HVS program</h3></center>
+
+<dd>
+To run HVS program type './hvs' from current directory. If program starts
+first time or file HVFrameList.props with list of hvframe hostnames not
+found in user directory, the window 'HV Host List' is poped-up. You need
+to crate list of hvmainframes by hostname and listening port; (see
+'<a href="#Add/Remove">Add/Remove_HVFrame_List</a>' below).The initialization
+of mainframes is begin after that. In this time the following process are
+happened:</dd><br>
+
+<ul>
+<li>
+the Main Window with Menu Bar, Tables and Status window are created<br> (classes
+HVmainMenu, HVStatus are used )</li>
+
+<li>
+list of hostnames for TCP/IP connection is loaded from file HVFrameList.props<br>
+(classes HVHostList,Parameters are used)</li>
+
+<li>
+'hvclient' threads to communicate with hvframes are started (one 'hvclient'
+for one mainframe)<br> (classes HVclient, HVmessage&nbsp; are used)</li>
+
+<li>
+HVFrames, HVmodules and HVchannels objects are initilized (get inforamation about current frame status,installed modules, channels properties and so on)<br>
+(classes HVframe,HVmodule,HVchannel,HVMessage,HVCommand,HVclient are used)</li>
+
+<li>
+tables with attached frames, modules and channels properties are created<br>
+(class HVmoduleTable is used)</li>
+
+<li>
+'hvmonitor' threads are started to moitoring  data changing with period in 3sec. (One 'hvmonitor' per one mainframe) <br>
+(class HVmonitor is used)</li>
+
+<li>
+'server' thread is started to reply command string from external 'clients'
+to hvmainframes.<br> (classes HVServer, HVServerThread, HVServerProtocol are
+used)</li>
+</ul>
+
+<dd>
+After that the screen with menu, tables and status window pop-up.</dd><br>
+
+<br><a href="#Top"><img SRC="images/up.gif" LOWSRC="images/up.gif" ALT="Top" height=20 width=20 align=CENTER></a>
+
+<h3>
+<a NAME="File"></a></h3>
+
+<h3>
+'<font color="#3333FF">File</font>'</h3> includes following items:<br><p>
+
+<ul>
+<li>
+'<b><font color="#3333FF">Load Voltage Set</font></b>' - to load
+settings of demand voltage from file.</li>
+
+<li>
+'<b><font color="#3333FF">Save Voltage Set</font></b>' - to store
+demand voltage settings to file for all frames.</li>
+
+<li>
+'<b><font color="#3333FF">Save Selected HVFrame Settings</font></b>'&nbsp;&nbsp;&nbsp;
+- to store all settable values to file for selected frame</li>
+
+<li>
+
+'<b><font color="#3333FF">Save All Settings</font></b>'&nbsp;&nbsp;&nbsp;
+- to store all settable values to file for all frames</li>
+
+<li>
+
+'<b><font color="#3333FF">Print</font></b>' - to print selected
+hvframe tables with channel parameters</li>
+
+<li>
+'<b><font color="#3333FF">Quit</font></b>' - to exit from program
+with confirmation</li>
+</ul>
+&nbsp;&nbsp; Format stored file with voltage settings is follows:
+<ul>
+<tt><font size=+0>hostname:port slot_number parameter value1 value2 ... valueN</font></tt></ul>
+<ul>
+<li>
+hostname:port - hostname and TCP/IP port of HV mainframe or<br>
+ hostname of PortServer and port number where HV mainframe is connected</li>
+
+<li>
+slot_number - slot number of module begins with "S" char (S0 in example)</li>
+<li>
+parameter - name of hvmodule properties(parameter) to store (DV demand
+voltage in example)</li>
+
+<li>
+value1,.. - values of parameter for every channel in module.</li>
+</ul>
+<p><br><i>Example</i>: Store demand voltage(DV) of mainframe with hostname
+host1:1090 with 2 modules in slots(0 and 1) with 12 channels each:<br>
+
+<blockquote>
+host1:1090 S0 DV -15.0 -14.0 -45.0 -10.0 -10.0 -10.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0<br>
+
+host1:1090 S1 DV -10.0 -10.0 -40.0 -10.0 -10.0 -10.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
+</blockquote>
+<a href="#Top"><img SRC="images/up.gif" LOWSRC="images/up.gif" ALT="Top" height=20 width=20 align=CENTER></a>
+<h3>
+<a NAME="Edit"></a></h3>
+
+<h3>
+'<font color="#3333FF">Edit</font>'</h3> includes following items:<br>
+
+<ul>
+<!----<li>
+'<b><font color="#3333FF">Add/Remove Frame List</font></b>' - to
+open window for add or remove hostname of&nbsp; hvmainframes from list.</li>
+--->
+<li>
+'<b><font color="#3333FF">Enable Channel</font></b>' - has submenu with three items<br>
+<ul>
+<li>'<b><font color="#3333FF">Selected Module</font></b>' -to enable all channels in selected module<br></li>
+<li>'<b><font color="#3333FF">Selected Frame</font></b>' -to enable all channels in selected frame<br></li>
+<li>'<b><font color="#3333FF">All Channels</font></b>' -to enable all channels in all frames<br></li>
+</ul>
+<li>
+'<b><font color="#3333FF">Disable Channel</font></b>' - has submenu with three items<br>
+<ul>
+<li>'<b><font color="#3333FF">Selected Module</font></b>' -to disable all channels in selected module<br></li>
+<li>'<b><font color="#3333FF">Selected Frame</font></b>' -to disable all channels in selected frame<br></li>
+<li>'<b><font color="#3333FF">All Channels</font></b>' -to disable all channels in all frames<br></li>
+</ul>
+
+<li>
+'<b><font color="#3333FF">Options</font></b>' - not implemented
+yet.</li>
+</ul>
+
+<h3>
+<a href="#Top"><img SRC="images/up.gif" LOWSRC="images/up.gif" ALT="Top" height=20 width=20 align=CENTER></a></h3>
+
+<h3>
+<a NAME="View"></a></h3>
+
+<h3>
+'<font color="#3333FF">View</font>'</h3> includes follows menu items:<br>
+
+<ul>
+<li>
+'<b><font color="#3333FF">SysInfo</font></b>' - to get system information
+from selected hvmainframe</li>
+
+<li>
+'<b><font color="#3333FF">ModuleInfo</font></b>' - to get information
+about selected hvmodule (model, serial number,&nbsp; number of channels
+</li>
+</ul>
+&nbsp;&nbsp; All this information displays in 'Status' window.
+<p><a href="#Top"><img SRC="images/up.gif" LOWSRC="images/up.gif" ALT="Top" height=20 width=20 align=CENTER></a>
+<h3>
+<a NAME="Map"></a></h3>
+&nbsp;
+<h3>
+'<font color="#3333FF">Map</font>' </h3>includes menu items with configured map names 
+to open window with <br>status of hvchannels in coordinates of corresponded map<br><p>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; This window shows table with
+HVON/HVOFF&nbsp; status of all channels
+<br> by coresponded icon and menu bar:
+<ul><center>
+<img SRC="images/hvsmap.jpg" ALT="HVS Map Window" align=CENTER></a>
+</center></ul>
+
+<p> 
+'<font color="#3333FF">File</font>', '<font color="#3333FF">View</font>',
+'<font color="#3333FF">Help</font>'
+<ul>
+<ul>
+<li>
+&nbsp;'<font color="#3333FF">File</font>' includes follows menu items:</li>
+
+<li>
+&nbsp;'<font color="#3333FF">Print</font>' - to print map window;</li>
+
+<li>
+&nbsp;'<font color="#3333FF">Close</font>' - close map window.</li>
+
+<li>
+&nbsp;'<font color="#3333FF">View</font>' - includes next menu items:</li>
+
+<ul>
+<li>
+&nbsp;'<font color="#3333FF">Channel Status</font>'&nbsp;&nbsp; - to view
+HVON/HVOFF status of channels in table cell as icon;</li>
+
+<li>
+&nbsp;'<font color="#3333FF">Measured Voltage</font>' - to view measured
+voltage of channels in table cells;</li>
+
+<li>
+&nbsp;'<font color="#3333FF">Setting Voltage</font>'&nbsp; - to view demand
+voltage of channels in table cells;</li>
+
+<li>
+&nbsp;'<font color="#3333FF">Measured Current</font> ' - to view measured
+current of channels in table cells;</li>
+</ul>
+</ul>
+</ul>
+
+<dd>
+The mouse double click on selected
+channel cells will pop-up window with all parameters for this
+channel and bring up to focus the table with this channel in HVS main
+window.</dd><br>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The format of map file for calorimeter is follows:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; first string is list of
+hostnames of HV mainframes  or hostname of the PortServer and port numbers where HV mainframe is connected:
+<blockquote>
+<font size=+0>hostname1:port1 hostname2:port2 ...</font><br>
+<font size=+0>portserver1:port1 portserver1:port2 ...</font><br>
+
+</blockquote>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; next strings represented rows(Y-coordinates)
+
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The channel address position
+in that strings represented
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; columns(X-coordinates):
+<blockquote>
+<blockquote>
+<pre><font size=+0>x,y channels location</font></pre>
+
+<pre><font size=+0>X:22 ... ... ... ... ... ... 01</font></pre>
+
+<pre><font size=+0>Y:</font></pre>
+
+<pre><font size=+0># 34</font></pre>
+
+<pre><font size=+0># 33</font></pre>
+
+<pre><font size=+0># ...</font></pre>
+
+<pre><font size=+0># 2</font></pre>
+
+<pre><font size=+0># 1</font></pre>
+</blockquote>
+</blockquote>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The channel address format is
+follows:
+<blockquote>
+<blockquote>
+<pre><font size=+0>#H#SS#CC - address of HVmainframe channel if no modules with subchannels,</font></pre>
+</blockquote>
+</blockquote>
+or:
+<blockquote>
+<blockquote>
+<pre><font size=+0>#H#SS#SB#CC - address of HVmainframe channel for modules with subchannels,</font></pre>
+</blockquote>
+</blockquote>
+
+<dd>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <i>#H </i>- one digit number(1-9)
+of mainframe by its location in hostname string above (1 -is first );</dd><br>
+
+<dd>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <i>#SS</i> - two digit slot
+number(0-15)<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>#SB</i> - submodule name in form "Sn", where 'S' is symbol "S", 'n' is submodule number(0-9);</dd><br>
+
+<dd>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i> #CC</i> - two digit channel
+number(0-11);</dd><br>
+
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; For example: next string
+represents channels for hvframe with hostname1:port1 for module in slot 0 and
+for channels from 0 to 11:<br><br>
+<font size=+0>10000 10001 10002 10003 10004 10005 10006 10007 10008 10009 10010 10011</font><br>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Next string
+represents channels for hvframe with hostname1:port1 for module in slot 12 with submodule 0 and 1 and
+for channels from 0 to 3:<br><br>
+<font size=+0>112S000 112S001 112S002 112S003 112S100 112S101 112S102 112S103 </font><br>
+
+
+<p><a NAME="Tools"></a>
+<h3>
+'<font color="#3333FF">Tools</font>'</h3> includes following items:<br>
+
+<ul>
+<li>
+'<b><font color="#3333FF">Add/Remove Frame List</font></b>' - to
+open window for add or remove hostname of&nbsp; hvmainframes from list.</li>
+<li>
+'<b><font color="#3333FF">Map Configurator</font></b>' - to
+open window for define parameters(name,files,size) of the maps in system.</li>
+<li>
+'<b><font color="#3333FF">HV Inventory</font></b>' - to
+open window with list of all hvframes and installed modules with its serial numbers.</li>
+</ul>
+
+
+<!---
+<p><a NAME="DataBase"></a>
+<br>
+<center>
+<h3>
+DataBase.</h3></center>
+
+<br>
+This menu will be usefull if database server is running. Currently we use PostgreSQL database.<br>
+All parameters from all hvchannels can be stored into the database and then loaded from it.<br>
+The record number (ID), date and comments is assigned for every set of hvchannels parameters <br>
+that are stored into the database. Then when need to load set of parameters, one<br>
+should select corresponded ID (with date and comments) from the list of stored settings.<br>
+<br> 
+'<b><font color="#3333FF">DataBase</font></b>' includes following items:</h3>
+
+<ul>
+
+<li>
+'<b><font color="#3333FF">Store Settings</font></b>' - to store
+all settings of all hvchannels to the DataBase.</li>
+
+<li>
+'<b><font color="#3333FF">Load Settings</font></b>' - to load 
+settings with selected ID from the DataBase .</li>
+
+
+
+<br><a href="#Top"><img SRC="images/up.gif" LOWSRC="images/up.gif" ALT="Top" height=20 width=20 align=CENTER></a>
+---->
+
+<p><a NAME="Help"></a>
+<br>
+<p>'<b><font color="#3333FF">Help</font></b>' shows this file.
+<br>
+<center>
+<h3>
+<a NAME="Table"></a></h3></center>
+
+<center>
+<h3>
+Table.</h3></center>
+<p>
+ <ul><center>
+<img SRC="images/hvstable.jpg" ALT="HVS Table" align=CENTER></a>
+</center></ul>
+<p>
+<dd>
+Table displays values of all properties of selected module for all channels.</dd><br>
+
+<br>Columns of table are values of properties(parameters).
+<br>Rows of table are channels of module. Modules are presented as horizontal
+tabbed panel(tabs on top side), with printed number of slot in tab title.
+To select module, move cursor on tab with given slot number and press left
+mouse button. Mainframes are presented also as vertical tabbed panel (tabs
+from left side), with printed hostname:port of mainframe in tab title.
+To select mainframe, move mouse cursor on tab with given hostname and press
+left mouse button. Values displayed in blue color can be edited.
+<dd>
+To select cell for editing once click left mouse button, while cursor placed
+on cell.</dd><br>
+
+<dd>
+To edit selected cell, once click left mouse button, delete old value and
+enter new value. If make double-click after cell selection, old value will
+be marked and new value can be entered.</dd><br>
+
+<dd>
+From left side of table buttons 'ON' and 'OFF' are placed to switch power
+on/off selected hvmainframe.</dd><br>
+
+<br>
+<p><a href="#Top"><img SRC="images/up.gif" LOWSRC="images/up.gif" ALT="Top" height=20 width=20 align=CENTER></a>
+<br>
+
+<center>
+<h3>
+<a NAME="Add/Remove"></a></h3></center>
+<center>
+<h3>
+Add/Remove HVFrame List</h3></center>
+
+<dd>
+Enter in left window 'hostname:port:protocol' of the first hvmainframe and press 'Add' button.
+The 'hostname' is hostname of HVmainframe if it directly connected to the ethernet and it uses TCP/IP protocol.
+The 'port' is port number. The 'protocol' is 'tcp' if TCP/IP protocol is used and it is 'telnet' if telnet protocol is used.
+The 'hostname:portnumber:protocol' appears in up window. Enter next
+hostname:portnumber:protocol of next hvmainframe and so on. <br>
+If need remove some hostname from list, select string with hostname for removing</dd><br>
+
+<br>and press 'Remove' button. This hostname disappears from list. To exit
+from this window press 'Close' button.
+<br>
+<dd>
+<b><i>NOTE</i></b>: If new hostname added to the hosname list, hvframe
+with this hostname is connected and its initialization is started.</dd><br>
+
+<br><a href="#Top"><img SRC="images/up.gif" LOWSRC="images/up.gif" ALT="Top" height=20 width=20 align=CENTER></a>
+
+<br>
+<center>
+<h3>
+<a NAME="HVServer"></a></h3></center>
+
+<center>
+<h3>
+HVS Server</h3></center>
+
+<h3>
+External requests.<br> </h3>
+<p>
+<h4>Commands Format</h4>
+
+<dd>
+One command at a time is strongly recommended for Ethernet controlled mainframes
+when one host is controlling multiple mainframes. To communicate with hvmainframes
+the program 'hvcli'(source hvclient.c)</dd>is used.<br> 
+This program get as parameters the hostname, portnumber and message for sending <br>
+to given host. There is possibility to use two protocols to communicate
+with  HV mainframes.<br>
+One of them is TCP/IP protocol that is used when HV mainframe connected directly 
+to ethernet.<br> 
+Another one is 'telnet' protocol that is used when HV mainframe connected to
+the PortServer using serial line connection.<br> 
+The format of command messages is identical for the both protocols.<br>
+<br>
+There are two way to communicate with HV mainframe:<br>
+First: if 'HVS' program does not runs,<br> 
+then the direct communication to frame is used:
+<ul>
+<tt><font size=+0>hvcli -h hostname -p portnumber -m 'message to send'</font></tt><br>
+</ul>
+<br>For example, next command send command message "SYSINFO" (get system
+information) <i>directly</i> to the hvmainframe with hostname 'hallahv1' on port 1090:
+<ul>
+<font size=+0><tt>hvcli -h hallahv1 -p 1090 -m 'sysinfo'</tt></font><br>
+</ul>
+<br>Second: if 'HVS' uses connection to this hvmainframe, the 'hvlient' should
+be started with another parameters :<br>
+<ul>
+<tt><font size=+0>hvcli -h hostname -p portnumber -m 'hvframehostname:port  message to send'</font></tt><br>
+</ul>
+in this case <i>hostname</i> - name of the host where HVS is running,
+
+<ul>
+<i>portnumber</i> = 5555(this port number used by HVS server)<br>
+<i>hvframehostname:port</i> - hostname and port number of the hvmainframe defined in hostname list(HVFrameList.props file).<br>
+</ul>
+
+For example, next command send command message "SYSINFO" for mainframe 
+
+with hostname=<i>hv01:1090</i> (get system information) to the server on the computer,  
+where HVS is running:
+<ul>
+<font size=+0><tt>hvcli -h host -p 5555 -m 'hv01:1090 sysinfo'</tt></font>
+</ul>
+Message may contains any enabled command-message for mainframe.
+Responses from mainframe printed to standard output and may be redirected
+to the file.
+<br>
+<dd>
+
+<h4>
+Map Commands Format</h4>
+The server running in HVS supports another format of command messages to</dd><br>
+process messages with channel addressing in map coordinates (map protocol).
+<dd>
+To get name list of currently defined maps the next command is used :<br>
+<ul>
+<tt><font size=+0> ./hvcli -h hostname -p 5555 -m 'get maplist' </font></tt>
+</ul>
+
+The output from this command is string for every map with map values, separeted by space:<br>
+<ul>
+<tt>
+ mapname X_size Y_size X_start_index Y_start_index <br></tt>
+</ul>
+
+If string begins with 'C' symbol than next string with map values is presented.<br> 
+<dd>
+<br>
+To get host list of currently defined HV frames the next command is used :<br>
+<ul>
+<tt><font size=+0> ./hvcli -h hostname -p 5555 -m 'get framelist' </font></tt>
+</ul>
+The output from this command is string for every frame in form: hostname:portnumber<br>
+<br>
+
+<dd>
+
+The message is null terminated string with ASCII characters( after -m parameter in command line). The
+format of this command message is follows:</dd><br>
+<ul>
+<tt><font size=+0> &lt;mapname> &lt;command> &lt;property> &lt;channel(s)_address> [&lt;channel(s)_address>] [&lt;value>]</font></tt>
+</ul>
+<blockquote>
+<li>
+<tt><font size=+0>&lt;mapname></font></tt> - name of the map when configured with 'Map Configurator'</li>
+</blockquote>
+
+<blockquote>
+<li>
+<tt><font size=+0>&lt;command></font></tt> - command word to the HVS server, one
+of the follows :</li>
+</blockquote>
+
+<blockquote>
+<ul><i>SET</i> - set <tt><font size=+0>&lt;value></font></tt> for <tt><font size=+0>&lt;property></font></tt>for
+channels with address <tt><font size=+0>&lt;channel(s)_address></font></tt>.
+This command valid only for next <tt><font size=+0>&lt;properties> </font></tt>:
+<ul>
+<ul>
+DV - demand voltage;
+<br>CE - channel enable;
+</ul>
+</ul>
+
+<i>GET</i> - get values of <tt><font size=+0>&lt;property></font></tt>for
+channels with address <tt><font size=+0>&lt;channel(s)_address></font></tt>.
+This command valid only for next <tt><font size=+0>&lt;properties></font></tt>
+:
+<ul>
+<ul>DV - demand voltage;
+<br>CE - channel enable;
+<br>MV - measured voltage;
+<br>MC - measured current;
+<br>ST - channel status;</ul>
+</ul>
+
+<i>UP </i>-&nbsp; set new bigger value of <tt><font size=+0>&lt;property></font></tt>
+for channels with address <tt><font size=+0>&lt;channel(s)_address> </font></tt>on<tt><font size=+0>
+&lt;value></font></tt>. This comman valid only for next <tt><font size=+0>&lt;property></font></tt>:
+
+<ul>
+<ul>DV - demand voltage;</ul>
+</ul>
+
+<i>DOWN</i> -&nbsp; set new lower value of <tt><font size=+0>&lt;property></font></tt>
+for channels with address <tt><font size=+0>&lt;channel(s)_address></font></tt>
+on <tt><font size=+0>&lt;value></font></tt>. This command valid only for
+next <tt><font size=+0>&lt;property></font></tt> :
+
+<ul>
+<ul>DV - demand voltage;</ul>
+</ul>
+</ul>
+
+<li>
+<tt><font size=+0>&lt;property></font></tt> - at this time only next properties
+are supported:</li>
+
+<blockquote>DV - demand voltage;
+<br>CE - channel enable;
+<br>MV - measured voltage;
+<br>MC - measured current;
+<br>ST - channel status;</blockquote>
+
+<li>
+<tt><font size=+0>&lt;channel(s)_address></font></tt> - address of one
+or more channels in x,y coordinates of calorimeter in next format:&nbsp;
+(x1 and y1 are integer numbers from 1 to 22 for x and from 1 to 32 for
+y)</li>
+
+<blockquote>x1,y2 - one channel with coordinates x=x1 and y=y1;
+<br>x1:xn,y1 - channels with coordinates x=x1,x2,..,xn and y=y1;
+<br>x1,y1:yn - channels with coordinates x=x1 and y=y1,y2,..,yn;
+<br>x1:xn,y1:ym -channels with coordinates x=x1,x2,..,xn and y=y1,y2,..,ym
+.</blockquote>
+
+<li>
+<tt><font size=+0>&lt;value></font></tt> - digital number. For CE property
+it is '1' (enable channel) or '0' (disable channel);</li>
+
+<br>
+For DV property it is digital number represented voltage set up or down
+(examples: 150,200,10..) or digital number ended with character '%'
+(example: 10%, 15%, 1% ...) represented percents to change of current voltage
+set value&nbsp; up or down.</blockquote>
+
+<a href="#Top"><img SRC="images/up.gif" LOWSRC="images/up.gif" ALT="Top" height=20 width=20 align=CENTER></a>
+
+<br>
+<center>
+<h3>
+<a NAME="HVAlarms"></a></h3></center>
+
+<center>
+<h3>
+Alarms.</h3></center>
+
+<dd>
+There are few conditions when HVS program generate alarm signals.<br>
+The program monitors following events:<br> 
+<ul>
+<li>
+ HVchannel's trip generated by channel in STATUS (ST) parameter.
+</li>
+<li>
+ HVframe internal status (extracted from configuration words of the HVframe)
+</li>
+<li>
+ Panic OFF condition.
+</li>
+<li>
+ Network connection to the HVframe.
+</li>
+<li>
+ HVframe power OFF not from GUI.
+</li>
+</ul>
+
+<p>
+Alarm signal is beepping sound (~every 2 sec) and flashing in red <br>
+tabs for hvframe, where one of noted above conditions was
+detected.<br>
+Also, window with button flashing in white/red and text "Alarm
+Silence" <br>
+is arised. The pressing on this button is disabled only voice
+alarm,<br> 
+but does not cleared alarm itself(except HVOFF alarm, that is cleared).
+<p>
+If hvchannel trip is detected then corresponded module tab and cell<br>
+with channel's name is flashing in red. <br>
+This state is cleared by cycling channel Enable/Disable check box<br>
+(select channel enable, wait about 1-2 second then select channel disable).<br>
+<p>
+Next conditions of HVframe states are extracted from configuration words <br>
+(replaying by command "CONFIG"):
+ <ul>
+<li>
+Status of +24V power supply ;
+</li>
+<li>
+Status of internal battery;
+</li>
+<li>
+Status of EEPROM;
+</li>
+<li>
+Front Key Switch position (local/remote);
+</li>
+<li>
+Status of Panic OFF.
+</li>
+</ul>
+If the status one of these conditions(except Key switch position) is "bad" <br>
+then the  program starts alarm signal and the label with corresponded "bad" <br>
+status(below ON/OFF buttons) is changed to the red color.  
+<p>
+Panic OFF alarm is arised when INTERLOCK input of the HVframe will be <br>
+activated or Panic OFF button will be pressed. The color of "Panic OFF" <br> 
+(above ON/OFF buttons) is changed to the red. <br>
+This alarm can be cleared only manualy from front panel of HVframe
+<br> 
+by pressing OFF switch when INTERLOCK input will be disactivated <br>
+(closed to ground).
+<p> 
+The alarm on lost network connection starts if no responce from hvframe<br>
+during period 40-60 seconds, but if connection will be restored, the alarm state <br>
+is cleared. As usualy, connection to the HVframe is restored in 1-2 minutes <br>
+and alarm is cleared automaticaly. <br>
+If no connection during long time period (more then 5 min) one should
+<br>
+makes reset of the HVframe and waiting at least 3-5 min <br>
+to restore connection to the HVframe.<br> 
+If no connection after HVframe reset, probably there are HVframe or network problems. 
+<p>
+If power of the HVframes will be ON , and somehow it is changed to the <br>
+power OFF state not from GUI, in this case alarm will be started.<br> 
+To clear this alarm state, one need just to press flashing black/red button
+"Alarm Silence" for alarmed HVframe.
+
+<p>
+</dd><br>
+
+<a href="#Top"><img SRC="images/up.gif" LOWSRC="images/up.gif" ALT="Top" height=20 width=20 align=CENTER></a>
+
+<center>
+<h3>
+<a NAME="PortServer"></a></h3></center>
+
+<center>
+<h3>
+Digi Port Server</h3></center>
+<center>(short description from Digi PortServer User's Guide).</center>
+<p>
+
+
+<p><br>
+<dd>
+The Digi PortServer intelligen terminal server gives ypu ability to connect up to 16 RS-232 <br>
+asychronous serial devisces to an Ethernet network.<br>
+The telnet command is used to log into a remote system using the telnet protocol.<br>
+The syntax is 'telnet  hostname  port#'. The 'hostname' is PortServers name on the net.<br> 
+The 'port#' is tcp port number that is port number where HV mainframe is connected plus 2000.<br>
+To reference the HV mainframe on port #4, use the value 2004.
+
+</dd><br>
+
+
+<a href="#Top"><img SRC="images/up.gif" LOWSRC="images/up.gif" ALT="Top" height=20 width=20 align=CENTER></a>
+
+<center>
+<h3>
+<a NAME="HVMainframe"></a></h3></center>
+
+<center>
+<h3>
+1458 LeCroy HV mainframe</h3></center>
+
+<center>(short description from 1454/1458 HV Mainframe User's Guide).</center>
+<p>
+ <ul><center>
+<img SRC="images/1450.jpg" ALT="1458 LeCroy HV Mainframe" align=CENTER></a>
+</center></ul>
+
+<p><br>
+<dd>
+Mainframe consists from 16 slots for high voltage modules, and has various
+interfaces for communication:serial RS-232, ARCNET, ETHERNET. To communicate
+with mainframe TCP/IP protocol is used in HVS program. For using telnet,
+type 'telnet hvhostname',</dd><br>
+
+<br>on password prompt enter: 'lrs1450' (by default). The commands can
+be entered directly from terminal.
+<br>List of generally used commands are:
+<blockquote><b>SYSINFO</b> - returns the mainframe system information.
+<br><b>LL</b>&nbsp; - returns the logical unit list in terms of slot-submodule,
+one for each logical unit in the order of logical unit number.
+<br><b>LD</b> -&nbsp; load values for single property(for a number channels
+of logical unit)
+<br><b>HVON/HVOFF</b>&nbsp; - switches the high voltage on and off.
+<br><b>IMOFF</b> - immediate turn off HV generation.
+<br><b>RC</b>&nbsp;&nbsp; - recall command returns the values for a given
+property for a channel or all channels in a module.
+<br><b>SRC</b>&nbsp; - super recall command returns the values for each
+property given&nbsp; as an argument for all channels and all modules.
+<br><b>PROP</b>&nbsp; - returns a list of the properties supported by specified
+logical unit</blockquote>
+
+<h3>
+<b>Command Messages.</b></h3>
+The format of&nbsp; command messages for modifies values as follow:
+<p>&nbsp;<tt><font size=+0>&lt;command> &lt;channel(s)> &lt;property(s)>
+&lt;value(s)></font></tt>
+<br>&nbsp;
+<h3>
+Slots, Modules/Submodules, Logical Units, and Channels.</h3>
+
+<dd>
+The 1450 system contains multiple slots which may or may not contain modules.</dd><br>
+
+<br>A module may span more than one slot but is addressed only by a single
+slot number. Modules always contain one or more submodules. The term logical
+unit is used to refer to submodules and modules with only one submodule.
+Logical units generally have multiple channels. All channels of a logical
+unit share identical properties and the values for these properties may
+not be channel independent
+<p><i>Logical Unit Specification:</i>
+<p>Example:
+<blockquote>Mainframe with 2 modules in slots 1 and 3 with the module in
+slot 1 containing one submodule<b>S1, S3S0,S3S1,S3S2,S3S3<i> </i></b>with
+corresponding logical unit number specifications <b>L0,L1,L2,L3,L4,L5</b>,
+respectively.</blockquote>
+<i>Channel Specification String:</i>
+<blockquote><b>S1</b>&nbsp; All channels in module in slot 1
+<br><b>S1.3</b>&nbsp; Channel 3 of slot 1
+<br><b>S4S2.1</b>&nbsp; Channel 1 of submodule 2 in slot 4
+<br><b>L0.3</b>&nbsp; Channel 3 of logical unit 0.
+<br><b>L1</b>&nbsp; All channels of logical unit
+1</blockquote>
+<i>Module Properties.</i>
+<p>The following properties are considered 'golden' and a will probably
+appear in all HV modules. The attributes listed are examples only.
+<blockquote><b>CE</b> - channel enable (label:Ch_En,units:, measured,range:0-1,
+format:%1s)
+<br><b>DV</b> - demand voltage (label:Target_V, units:V, range:-3000-0,
+format:%7.1f)
+<br><b>HVL</b> - hardware voltage limit(label:HV_LIM, units:V, measured,
+range:7,
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; format:%7.1f)
+<br><b>MC</b> - measured current (label:Meas_uA, units:uA, measured, range:7
+format%7.1f)
+<br><b>MV</b> - measured voltage (label:Meas_V, units:V, measured, range:7
+format%7.1f)
+<br><b>MCDZ</b>- measured currnet dead zone (label:MC_Zone, units:uA, range:0-100,
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; format:%7.1f)
+<br><b>MVDZ</b> - measured voltage dead zone (label:MV_Zone, units:V, range:0-100,
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; format:%7.1f)
+<br><b>RUP</b> - rump Up rate (label:RUp_V/s, units:V/s, range:300, format:%7.1f)
+<br><b>RDN</b> - rump Down rate (label:RDn_V/s, units:V/s, range:300, format:%7.1f)
+<br><b>ST</b> - channel status (label:Status, measured, range:4, format:%4x)
+<br><b>TC</b> - trip current (label:Trip_uA, units:uA, range:1000 format:%7.1f)</blockquote>
+<a href="#Top"><img SRC="images/up.gif" LOWSRC="images/up.gif" ALT="Top" height=20 width=20 align=CENTER></a>
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<hr>
+<ul><center>
+<img SRC="images/javalogo52x88.gif" LOWSRC="images/images/javalogo34x58.gif" ALT="Top" height=88 width=52 align=CENTER></a>
+</center></ul>
+<hr>
+</body>
+</html>
